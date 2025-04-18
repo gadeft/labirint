@@ -1,17 +1,18 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <fstream>
 
 using field = std::vector<std::vector<char>>;
 using point = std::pair<int, int>;
 using set_of_points = std::set<point>;
 
-void print_field(field& labirint);
 std::istream& operator>>(std::istream& in, field& labirint);
 std::ostream& operator<<(std::ostream& out, field& labirint);
-bool is_path_exist(const field& labirint, point& curr, set_of_points& visited);
+bool is_path_exist(const field& labirint, const point& curr, set_of_points& visited);
 std::vector<point> neighbors(const field& labirint, const point& p);
 char get_value(const field& labirint, const point& p);
+point find_point(const field& labirint, char symbol);
 
 const char begin = 'A';
 const char end = 'B';
@@ -24,8 +25,49 @@ int main()
     {
         field labirint;
 
-        std::cin >> labirint;
+        po::options_description desc("Allowed options");
+        desc.add_options()
+            ("help", "produce help message")
+            ("filename", po::value<std::string>(), "set the name of the file")
+        ;
+
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);    
+
+        if (vm.count("help")) 
+        {
+            std::cout << desc << "\n";
+            throw std::runtime_error("Help requested");
+        }
+
+        if (vm.count("filename")) 
+        {
+            std::cout << "The filename was set to " 
+         << vm["filename"].as<std::string>() << ".\n";
+
+            std::fstream in_file(vm["filename"].as<std::string>());
+            if (!in_file.open())
+                throw std::runtime_error("Unable to open the file");
+            in_file >> labirint;
+        } 
+        else 
+        {
+            std::cout << "The filename was not set.\n";
+
+            std::cin >> labirint;
+        }
+
+        set_of_points visited;
+
+        point start = find_point(labirint, begin);
         std::cout << labirint << std::endl;
+
+        std::cout << (
+                is_path_exist(labirint, start, visited) ? 
+                "Path exists" :
+                "Path does not exist"
+                ) << std::endl;
 
         return 0;
     }
@@ -55,7 +97,7 @@ std::vector<point> neighbors(const field& labirint, const point& p)
 {
     std::vector<point> result;
 
-    if (p.fisrt > 0)
+    if (p.first > 0)
         result.push_back({p.first - 1, p.second});
     if (p.second < labirint[0].size() - 1)
         result.push_back({p.first, p.second + 1});
@@ -67,7 +109,7 @@ std::vector<point> neighbors(const field& labirint, const point& p)
     return std::move(result);
 }
 
-bool is_path_exist(const field& labirint, point& curr, set_of_points& visited)
+bool is_path_exist(const field& labirint, const point& curr, set_of_points& visited)
 {
     if (get_value(labirint, curr) == end)
         return true;
