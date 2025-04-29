@@ -2,6 +2,9 @@
 #include <vector>
 #include <set>
 #include <fstream>
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
 
 using field = std::vector<std::vector<char>>;
 using point = std::pair<int, int>;
@@ -19,7 +22,7 @@ const char end = 'B';
 const char wall = 'X';
 const char corridor = ' ';
 
-int main()
+int main(int argc, char* argv[])
 {
     try
     {
@@ -47,7 +50,7 @@ int main()
          << vm["filename"].as<std::string>() << ".\n";
 
             std::fstream in_file(vm["filename"].as<std::string>());
-            if (!in_file.open())
+            if (!in_file.is_open())
                 throw std::runtime_error("Unable to open the file");
             in_file >> labirint;
         } 
